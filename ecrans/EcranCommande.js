@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, TextInput, StyleSheet, ScrollView, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, ScrollView, FlatList, ActivityIndicator, Image } from 'react-native';
 import { db, auth } from '../firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import { showLocalNotification } from '../utils/notifications';
@@ -23,9 +23,9 @@ export default function EcranCommande() {
   }, []);
 
   const palettes = [
-    { id: 1, nom: 'Petite palette', volume: '6 bouteilles', prix: 1500, icon: '🥤' },
-    { id: 2, nom: 'Palette moyenne', volume: '12 bouteilles', prix: 2800, icon: '🧃' },
-    { id: 3, nom: 'Grande palette', volume: '24 bouteilles', prix: 5000, icon: '🚰' },
+    { id: 1, nom: 'Palette 250mL', volume: '24 bouteilles', prix: 1500, image: require('../assets/palette250.png') },
+    { id: 2, nom: 'Palette 0.5L', volume: '12 bouteilles', prix: 2800, image: require('../assets/palette500.png') },
+    { id: 3, nom: 'Palette 1L', volume: '6 bouteilles', prix: 5000, image: require('../assets/palette1l.png') },
   ];
 
   const validerCommande = async () => {
@@ -52,8 +52,6 @@ export default function EcranCommande() {
     try {
       const prixTotal = quantiteNombre * paletteChoisie.prix;
       
-      console.log('Tentative d\'enregistrement pour:', utilisateur.email);
-      
       const docRef = await addDoc(collection(db, 'commandes'), {
         clientId: utilisateur.uid,
         clientEmail: utilisateur.email,
@@ -66,22 +64,17 @@ export default function EcranCommande() {
         statut: 'En attente'
       });
 
-      console.log('Commande enregistrée avec ID:', docRef.id);
-
-      // Notification locale immédiate
       await showLocalNotification(
         '✓ Commande enregistrée',
         `${quantiteNombre} x ${paletteChoisie.nom} - Livraison prévue le ${delai}`
       );
 
-      // Toast de succès
       setToast({
         visible: true,
         message: `✓ Commande envoyée ! ${quantiteNombre} x ${paletteChoisie.nom} - Total: ${prixTotal.toLocaleString()} FCFA`,
         type: 'success'
       });
       
-      // Réinitialisation
       setPaletteChoisie(null);
       setQuantite('');
       setDelai('');
@@ -105,7 +98,7 @@ export default function EcranCommande() {
       activeOpacity={0.8}
       disabled={chargement}
     >
-      <Text style={styles.iconPalette}>{item.icon}</Text>
+      <Image source={item.image} style={styles.imagePalette} resizeMode="contain" />
       <Text style={styles.nomPalette}>{item.nom}</Text>
       <Text style={styles.volumePalette}>{item.volume}</Text>
       <Text style={styles.prixPalette}>{item.prix.toLocaleString()} FCFA</Text>
@@ -172,18 +165,29 @@ export default function EcranCommande() {
 const styles = StyleSheet.create({
   conteneur: { flex: 1, padding: 20, backgroundColor: '#fff' },
   centre: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
-  titre: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, textAlign: 'center', color: '#0066CC' },
   sousTitre: { fontSize: 18, fontWeight: 'bold', marginBottom: 15 },
   listeHorizontale: { paddingVertical: 10, paddingRight: 20 },
-  cartePalette: { width: 160, height: 180, backgroundColor: '#f9f9f9', borderRadius: 12, borderWidth: 1, borderColor: '#ddd', padding: 12, marginRight: 15, justifyContent: 'center', alignItems: 'center', elevation: 2 },
-  carteChoisie: { borderColor: '#0066CC', borderWidth: 3, backgroundColor: '#e6f0ff' },
-  iconPalette: { fontSize: 40, marginBottom: 10 },
-  nomPalette: { fontSize: 16, fontWeight: 'bold', textAlign: 'center', marginBottom: 4 },
+  cartePalette: { 
+    width: 160, 
+    height: 200, 
+    backgroundColor: '#f9f9f9', 
+    borderRadius: 12, 
+    borderWidth: 1, 
+    borderColor: '#ddd', 
+    padding: 12, 
+    marginRight: 15, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    elevation: 2 
+  },
+  carteChoisie: { borderColor: colors.primary, borderWidth: 3, backgroundColor: '#e6f0ff' },
+  imagePalette: { width: 100, height: 100, marginBottom: 10 },
+  nomPalette: { fontSize: 14, fontWeight: 'bold', textAlign: 'center', marginBottom: 4 },
   volumePalette: { fontSize: 12, color: '#666', textAlign: 'center', marginBottom: 8 },
-  prixPalette: { fontSize: 14, color: '#0066CC', fontWeight: 'bold', textAlign: 'center' },
+  prixPalette: { fontSize: 14, color: colors.primary, fontWeight: 'bold', textAlign: 'center' },
   label: { fontSize: 16, fontWeight: 'bold', marginTop: 20, marginBottom: 5 },
   champ: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 12, fontSize: 16, marginBottom: 15, backgroundColor: '#fff' },
-  boutonValider: { backgroundColor: '#0066CC', padding: 15, borderRadius: 10, marginTop: 20, marginBottom: 40, alignItems: 'center' },
+  boutonValider: { backgroundColor: colors.primary, padding: 15, borderRadius: 10, marginTop: 20, marginBottom: 40, alignItems: 'center' },
   boutonDesactive: { backgroundColor: '#999' },
   boutonValiderTexte: { color: 'white', fontSize: 18, textAlign: 'center', fontWeight: 'bold' },
   erreurTexte: { fontSize: 18, color: 'red', textAlign: 'center' },
